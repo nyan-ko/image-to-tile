@@ -74,7 +74,12 @@ namespace ImageToTile {
                     Console.WriteLine($"{image.Name} is an invalid image file. Skipping.");
                     continue;
                 }
-                using (BinaryWriter writer = new BinaryWriter(new BufferedStream(new GZipStream(File.Open(Path.Combine(OutputPath, image.Name), FileMode.Create), CompressionMode.Compress)))) {
+
+                Console.WriteLine($"Processing image \"{image.Name}\"...");
+
+                string schemName = Path.GetFileNameWithoutExtension(image.FullName) + ".dat";
+
+                using (BinaryWriter writer = new BinaryWriter(new BufferedStream(new GZipStream(File.Open(Path.Combine(OutputPath, schemName), FileMode.Create), CompressionMode.Compress)))) {
                     writer.WriteSection(Utils.GetSectionDataFromImageTileArray(Utils.ProcessBitmapImage(bitmap), bitmap.Width, bitmap.Height));
                 }
                 count++;
