@@ -79,8 +79,15 @@ namespace ImageToTile {
 
                 string schemName = Path.GetFileNameWithoutExtension(image.FullName) + ".dat";
 
-                using (BinaryWriter writer = new BinaryWriter(new BufferedStream(new GZipStream(File.Open(Path.Combine(OutputPath, schemName), FileMode.Create), CompressionMode.Compress)))) {
-                    writer.WriteSection(Utils.GetSectionDataFromImageTileArray(Utils.ProcessBitmapImage(bitmap), bitmap.Width, bitmap.Height));
+                var section = Utils.GetSectionDataFromImageTileArray(Utils.ProcessBitmapImage(bitmap), bitmap.Width, bitmap.Height);
+                var stream = File.Open(Path.Combine(OutputPath, schemName), FileMode.Create);
+
+                using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true)) {
+                    writer.WriteHeader(section);
+                }
+
+                using (BinaryWriter writer = new BinaryWriter(new BufferedStream(new GZipStream(stream, CompressionMode.Compress)))) {
+                    writer.WriteSection(section);
                 }
                 count++;
             }
@@ -104,8 +111,8 @@ namespace ImageToTile {
     }
 
     public struct ImageWall {
-        public short wallType;
-        public byte paintType;
+        public short wall;
+        public byte paint;
     }
 
     // Token: 0x02000348 RID: 840
@@ -159,11 +166,14 @@ namespace ImageToTile {
         // stole most of this code from my old client which compiled everything into illegible variables and syntax
         // initially tried to remove the weird syntax but gave up
 
-        public static void WriteSection(this BinaryWriter writer, SectionData section) {
+        public static void WriteHeader(this BinaryWriter writer, SectionData section) {
             writer.Write(section.X);
             writer.Write(section.Y);
             writer.Write(section.Width);
             writer.Write(section.Height);
+        }
+
+        public static void WriteSection(this BinaryWriter writer, SectionData section) {
             for (int x = 0; x < section.Width; x++) {
                 for (int y = 0; y < section.Height; y++) {
                     writer.WriteTile(section.Tiles[x, y]);
@@ -194,8 +204,8 @@ namespace ImageToTile {
                     ImageWall imageTile = imageTiles[i, j];
                     array[i, j] = new Tile();
 
-                    array[i, j].wall = (byte)imageTile.wallType;
-                    array[i, j].wallColor((byte)imageTile.paintType);
+                    array[i, j].wall = (byte)imageTile.wall;
+                    array[i, j].wallColor((byte)imageTile.paint);
                     
                 }
             }
